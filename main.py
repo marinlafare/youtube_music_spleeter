@@ -5,14 +5,7 @@ from spleeter.separator import Separator
 import logging
 
 logging.getLogger('spleeter').setLevel(logging.ERROR)
-def check_folders_and_models():
-    if not os.path.exists('raw_videos'):
-        os.makedirs('raw_videos')
-    if not os.path.exists('splitted_audios'):
-        os.makedirs('splitted_audios')
-    if not os.path.exists('pretrained_models'):
-        raise "NOT PRETRAINED MODELS; YOU NEED THOSE"
-    return True
+
 def download_youtube_video():
     yt_opts = {
         'format': 'bestaudio/best',
@@ -49,8 +42,7 @@ def split_music(stems:int=2):
     separator.separate_to_file(most_recent_file, output_folder)
 
 if __name__ == '__main__':
-    if check_folders_and_models():
-        pass
+    
     download_youtube_video()
     stems = input('Stems: 2, 4 or 5: ')
     if stems in ['2','4','5']:
