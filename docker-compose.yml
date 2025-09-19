@@ -6,5 +6,6 @@ services:
       - ./splitted_audios:/app/splitted_audios
     environment:
       - TF_CPP_MIN_LOG_LEVEL=2
-    stdin_open: true # Keeps the container open for user input
-    tty: true # Allocates a pseudo-TTY
+      - PYTHONWARNINGS=ignore
+    stdin_open: true
+    tty: true
