@@ -1,67 +1,101 @@
+import subprocess
 import os
-import numpy
-import yt_dlp
-from spleeter.separator import Separator
+import re
 import logging
+from spleeter.separator import Separator
 
+# Suppress spleeter's informational logging
 logging.getLogger('spleeter').setLevel(logging.ERROR)
-def check_folders_and_models():
-    if not os.path.exists('raw_videos'):
-        os.makedirs('raw_videos')
-    if not os.path.exists('splitted_audios'):
-        os.makedirs('splitted_audios')
-    
-def download_youtube_video():
-    yt_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': 'raw_videos/%(title)s.%(ext)s',
-        'noplaylist': True,
-        'quiet':True,
-        'no_warnings':True,
-        'noprogress':True,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
-    
-    ydl = yt_dlp.YoutubeDL(yt_opts)
-    
-    youtube_video_url = input("Enter YouTube video URL: ")
-    
-    try:
-        print("Downloading video")
-        ydl.download(youtube_video_url)
-        print("Video ready at: raw_videos")
-    except Exception as e:
-        print(f"Video download failed! ❌ Error: {e}")
-        
-def split_music(stems:int=2):
-    all_files = [os.path.join('raw_videos', f) for f in os.listdir('raw_videos')]
-    most_recent_file = max(all_files, key=os.path.getmtime)
-    separator = Separator(f'spleeter:{stems}stems')
 
-    # # Separate the audio file and save the output
-    output_folder = "splitted_audios"
-    separator.separate_to_file(most_recent_file, output_folder)
+def sanitize_filename(filename):
+    """
+    Sanitizes a string to be a valid filename.
+    Removes invalid characters and replaces spaces with underscores.
+    """
+    # Remove characters that are not alphanumeric, spaces, or hyphens
+    s = re.sub(r'[^\w\s-]', '', filename)
+    # Replace one or more spaces with a single underscore
+    s = re.sub(r'\s+', '_', s)
+    return s.strip()
+
+def download_and_split(youtube_url, stems: int):
+    """
+    Downloads a YouTube video as an MP3 and splits it into the specified number of stems.
+    """
+    try:
+        # Step 1: Download the video as an MP3 audio file
+        print(f"Downloading audio from {youtube_url}...")
+        
+        # Get video title from yt-dlp without downloading
+        yt_opts_title = {
+            'noplaylist': True,
+            'quiet': True,
+            'skip_download': True,
+        }
+        with yt_dlp.YoutubeDL(yt_opts_title) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            video_title = info.get('title', 'video')
+
+        sanitized_title = sanitize_filename(video_title)
+        output_path_template = os.path.join('raw_videos', f'{sanitized_title}.%(ext)s')
+
+        yt_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': output_path_template,
+            'noplaylist': True,
+            'quiet': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+        
+        with yt_dlp.YoutubeDL(yt_opts) as ydl:
+            ydl.download([youtube_url])
+        
+        mp3_path = os.path.join('raw_videos', f'{sanitized_title}.mp3')
+        if not os.path.exists(mp3_path):
+            raise FileNotFoundError(f"Downloaded file not found at {mp3_path}")
+
+        print("Download complete.")
+
+        # Step 2: Use Spleeter to split the audio
+        print(f"Splitting audio from '{sanitized_title}' into {stems} stems...")
+        
+        separator = Separator(f'spleeter:{stems}stems')
+        output_folder = "splitted_audios"
+        separator.separate_to_file(mp3_path, output_folder)
+        
+        print(f"Splitting complete. The files are located in the '{os.path.join(output_folder, sanitized_title)}' folder.")
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print("Please check the URL or try again.")
+
+def check_folders():
+    """Ensures necessary directories exist."""
+    os.makedirs('raw_videos', exist_ok=True)
+    os.makedirs('splitted_audios', exist_ok=True)
 
 if __name__ == '__main__':
-    check_folders_and_models()
-    download_youtube_video()
-    stems = input('Stems: 2, 4 or 5: ')
-    if stems in ['2','4','5']:
-        stems = int(stems)
-        split_music(stems = stems)
-    else:
-        print('Stems will be 2, for separating voice and Music')
-        split_music(stems = 2)
-
-
-
-
-
-
-
-
-        
+    check_folders()
+    while True:
+        try:
+            youtube_url = input("Please enter the YouTube URL (or press Enter to exit): ")
+            if not youtube_url:
+                print("No URL entered. Exiting.")
+                break
+            
+            stems_input = input("Enter number of stems (2, 4, or 5): ")
+            stems = int(stems_input) if stems_input in ['2', '4', '5'] else 2
+            
+            if stems == 2:
+                print('Defaulting to 2 stems for separating voice and music.')
+            
+            download_and_split(youtube_url, stems)
+        except (ValueError, IndexError):
+            print("Invalid input for stems. Please enter a valid number (2, 4, or 5).")
+        except EOFError:
+            print("\nInput stream closed. Exiting.")
+            break
