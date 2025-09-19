@@ -13,9 +13,7 @@ def sanitize_filename(filename):
     Sanitizes a string to be a valid filename.
     Removes invalid characters and replaces spaces with underscores.
     """
-    # Remove characters that are not alphanumeric, spaces, or hyphens
     s = re.sub(r'[^\w\s-]', '', filename)
-    # Replace one or more spaces with a single underscore
     s = re.sub(r'\s+', '_', s)
     return s.strip()
 
@@ -24,10 +22,7 @@ def download_and_split(youtube_url, stems: int):
     Downloads a YouTube video as an MP3 and splits it into the specified number of stems.
     """
     try:
-        # Step 1: Download the video as an MP3 audio file
         print(f"Downloading audio from {youtube_url}...")
-        
-        # Get video title from yt-dlp without downloading
         yt_opts_title = {
             'noplaylist': True,
             'quiet': True,
@@ -60,8 +55,6 @@ def download_and_split(youtube_url, stems: int):
             raise FileNotFoundError(f"Downloaded file not found at {mp3_path}")
 
         print("Download complete.")
-
-        # Step 2: Use Spleeter to split the audio
         print(f"Splitting audio from '{sanitized_title}' into {stems} stems...")
         
         separator = Separator(f'spleeter:{stems}stems')
