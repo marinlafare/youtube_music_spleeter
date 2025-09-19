@@ -18,11 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # This ensures the directories exist when the script runs.
 RUN mkdir -p raw_videos splitted_audios
 
-# Use the VOLUME instruction to create a managed volume
-# This will prevent the data from being deleted when the container exits.
-VOLUME /app/raw_videos
-VOLUME /app/splitted_audios
-
 # Copy the rest of the application code into the container at /app
 COPY main.py .
 

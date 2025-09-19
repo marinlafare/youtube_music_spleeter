@@ -1,0 +1,14 @@
+
+services:
+  youtube-splitter:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    # Mount local directories into the container to store the output
+    # This automatically creates the folders on your host machine
+    # if they do not already exist.
+    volumes:
+      - ./raw_videos:/app/raw_videos
+      - ./splitted_audios:/app/splitted_audios
+    # Enable interactive mode so you can input the URL and see output
+    stdin_open: true # Allows for user input
+    tty: true # Allocates a pseudo-TTY
