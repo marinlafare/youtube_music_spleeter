@@ -47,7 +47,7 @@ def split_music(stems:int=2):
     separator.separate_to_file(most_recent_file, output_folder)
 
 if __name__ == '__main__':
-    check_folders_and_models():
+    check_folders_and_models()
     download_youtube_video()
     stems = input('Stems: 2, 4 or 5: ')
     if stems in ['2','4','5']:
