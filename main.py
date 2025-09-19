@@ -1,4 +1,3 @@
-import subprocess
 import os
 import re
 import logging
@@ -7,7 +6,6 @@ from pathlib import Path
 import yt_dlp
 from spleeter.separator import Separator
 
-# Suppress spleeter's informational logging
 logging.getLogger('spleeter').setLevel(logging.ERROR)
 
 def sanitize_filename(filename):
@@ -85,20 +83,18 @@ if __name__ == '__main__':
     check_folders()
     while True:
         try:
-            youtube_url = input("Please enter the YouTube URL (or press Enter to exit): ")
+            youtube_url = input("YouTube URL (or press Enter to exit): ")
             if not youtube_url:
-                print("No URL entered. Exiting.")
+                print("Bye bye then")
                 break
             
             stems_input = input("Enter number of stems (2, 4, or 5): ")
-            stems = int(stems_input) if stems_input in ['2', '4', '5'] else 2
+            stems = int(stems_input) if stems_input in ['2', '4', '5'] else "IDK"
             
-            if stems == 2:
-                print('Defaulting to 2 stems for separating voice and music.')
+            if stems == "IDK":
+                print(f"I don't know what {stems} means. I'll just assume is 2")
+                stems = 2
             
             download_and_split(youtube_url, stems)
-        except (ValueError, IndexError):
-            print("Invalid input for stems. Please enter a valid number (2, 4, or 5).")
-        except EOFError:
-            print("\nInput stream closed. Exiting.")
-            break
+        except:
+            print('SOMETHING HAPPENED!!!!!!! SOMETHING FAILED!!!!!!!!')
